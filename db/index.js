@@ -2,6 +2,22 @@ const { Client } = require("pg"); // imports the pg module
 
 const client = new Client("postgres://localhost:5432/juicebox-dev");
 
+const PORT = 3000;
+const express = require("express");
+const server = express();
+const apiRouter = require("./api");
+server.use("/api", apiRouter);
+const { client } = require("./db");
+client.connect();
+
+server.listen(PORT, () => {
+  // old stuff
+});
+
+server.listen(PORT, () => {
+  console.log("The server is up on port", PORT);
+});
+
 /**
  * USER Methods
  */
@@ -354,6 +370,25 @@ async function getAllTags() {
   }
 }
 
+async function getUserByUsername(username) {
+  try {
+    const {
+      rows: [user],
+    } = await client.query(
+      `
+      SELECT *
+      FROM users
+      WHERE username=$1;
+    `,
+      [username]
+    );
+
+    return user;
+  } catch (error) {
+    throw error;
+  }
+}
+
 module.exports = {
   client,
   createUser,
@@ -369,4 +404,5 @@ module.exports = {
   getAllTags,
   createPostTag,
   addTagsToPost,
+  getUserByUsername
 };
