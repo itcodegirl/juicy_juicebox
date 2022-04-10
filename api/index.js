@@ -1,22 +1,22 @@
+// Dependencies
+
 const express = require("express");
-const apiRouter = express.Router();
 const jwt = require("jsonwebtoken");
 const { getUserById } = require("../db");
 const { JWT_SECRET } = process.env;
 
+const apiRouter = express.Router();
 const usersRouter = require("./users");
-apiRouter.use("/users", usersRouter);
 const postsRouter = require("./posts");
 const tagsRouter = require("./tags");
 
-// set `req.user` if possible
-apiRouter.use(async (req, res, next) => {
-  const prefix = 'Bearer ';
-  const auth = req.header('Authorization');
+// Listeners
 
-    //IF: The Authorization header wasn't set. This might happen with registration or login, or when the browser doesn't have a saved token. 
-    // Regardless of why, there is no way we can set a user if their data isn't passed to us.
-  if (!auth) { // nothing to see here
+apiRouter.use(async (req, res, next) => {
+  const prefix = "Bearer ";
+  const auth = req.header("Authorization");
+
+  if (!auth) {
     next();
   } else if (auth.startsWith(prefix)) {
     const token = auth.slice(prefix.length);
@@ -33,19 +33,33 @@ apiRouter.use(async (req, res, next) => {
     }
   } else {
     next({
-      name: 'AuthorizationHeaderError',
-      message: `Authorization token must start with ${ prefix }`
+      name: "AuthorizationHeaderError",
+      message: `Authorization token must start with ${prefix}`,
     });
   }
 });
 
-apiRouter.use((error, req, res, next) => {
-  res.send({
-    name: error.name,
-    message: error.message,
-  });
+apiRouter.use((req, res, next) => {
+  if (req.user) {
+    console.log("User is set:", req.user);
+  }
+
+  next();
 });
 
-// Attach routers below here
+apiRouter.use("/users", usersRouter);
+apiRouter.use("/posts", postsRouter);
+apiRouter.use("/tags", tagsRouter);
+
+// Error handler
+apiRouter.use((error, req, res, next) => {
+  res.send(error);
+});
+
+// Export - attach routers below here
+
 
 module.exports = apiRouter;
+
+
+
